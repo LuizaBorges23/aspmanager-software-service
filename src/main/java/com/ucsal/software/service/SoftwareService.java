@@ -13,7 +13,6 @@ import com.ucsal.software.repository.SoftwareRepository;
 import com.ucsal.software.repository.SolicitacaoSoftwareRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
-import lombok.Builder;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -95,9 +94,11 @@ public class SoftwareService implements ServiceBase<Long,
     }
 
     @Transactional
-    public com.ucsal.software.dto.response.SolicitacaoSoftwareResponse criarSolicitacao(com.ucsal.software.dto.request.@Valid CreateSolicitacaoSoftwareRequest request) {
-
+    public com.ucsal.software.dto.response.SolicitacaoSoftwareResponse criarSolicitacao(
+            com.ucsal.software.dto.request.@Valid CreateSolicitacaoSoftwareRequest request,
+            Long professorId) {
         SolicitacaoSoftware solicitacao = solicitacaoSoftwareMapper.toEntity(request);
+        solicitacao.setProfessor(professorId);
         solicitacao.setDataSolicitacao(LocalDate.now());
         solicitacao.setTipoSolicitacaoSoftware(TipoSolicitacaoSoftware.ATIVACAO);
         solicitacao.setStatusSolicitacao(StatusSolicitacao.PENDENTE);
@@ -182,8 +183,8 @@ public class SoftwareService implements ServiceBase<Long,
         );
     }
 
-    public @Nullable Page<SolicitacaoSoftwareResponse> buscarMinhasSolicitacoes(Pageable filtros) {
-
-        return null;
+    public @Nullable Page<SolicitacaoSoftwareResponse> buscarMinhasSolicitacoes(Long professorId, Pageable filtros) {
+        return solicitacoesSoftware.findByProfessor(professorId, filtros)
+                .map(solicitacaoSoftwareMapper::toResponse);
     }
 }

@@ -1,6 +1,8 @@
 package com.ucsal.software.controller;
 
+import com.ucsal.software.dto.request.CreateSoftwareRequest;
 import com.ucsal.software.dto.request.CreateSolicitacaoSoftwareRequest;
+import com.ucsal.software.dto.request.UpdateSoftwareRequest;
 import com.ucsal.software.dto.request.UpdateSolicitacaoSoftwareRequest;
 import com.ucsal.software.dto.response.ErroApiResponse;
 import com.ucsal.software.dto.response.SoftwareResponse;
@@ -24,6 +26,62 @@ import java.net.URI;
 public interface ISoftwareController {
     URI location(SoftwareResponse software, UriComponentsBuilder uriBuilder);
 
+    @PostMapping
+    @Operation(operationId = "createSoftware", summary = "Criar um novo software", description = "Cadastra um software diretamente no sistema (Fluxo Administrativo).")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Software criado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos para criação do software", content = @Content(schema = @Schema(implementation = ErroApiResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErroApiResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Acesso negado", content = @Content(schema = @Schema(implementation = ErroApiResponse.class)))
+    })
+    ResponseEntity<SoftwareResponse> criar(
+            @Valid @RequestBody CreateSoftwareRequest request,
+            UriComponentsBuilder uriBuilder);
+
+    @GetMapping
+    @Operation(operationId = "listSoftwares", summary = "Listar todos os softwares", description = "Retorna uma lista paginada de todos os softwares cadastrados.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Consulta realizada com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErroApiResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Acesso negado", content = @Content(schema = @Schema(implementation = ErroApiResponse.class)))
+    })
+    ResponseEntity<Page<SoftwareResponse>> buscarTodos(@ParameterObject Pageable filtros);
+
+    @GetMapping("/{id}")
+    @Operation(operationId = "getSoftwareById", summary = "Buscar software por ID", description = "Retorna os detalhes completos de um software específico.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Software encontrado"),
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErroApiResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Acesso negado", content = @Content(schema = @Schema(implementation = ErroApiResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Software não encontrado", content = @Content(schema = @Schema(implementation = ErroApiResponse.class)))
+    })
+    ResponseEntity<SoftwareResponse> buscar(
+            @Parameter(description = "ID do software", example = "1") @PathVariable Long id);
+
+    @PutMapping("/{id}")
+    @Operation(operationId = "updateSoftware", summary = "Atualizar dados do software", description = "Atualiza as informações de um software existente pelo seu ID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Software atualizado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos para atualização", content = @Content(schema = @Schema(implementation = ErroApiResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErroApiResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Acesso negado", content = @Content(schema = @Schema(implementation = ErroApiResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Software não encontrado", content = @Content(schema = @Schema(implementation = ErroApiResponse.class)))
+    })
+    ResponseEntity<SoftwareResponse> atualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateSoftwareRequest request);
+
+    @DeleteMapping("/{id}")
+    @Operation(operationId = "deleteSoftware", summary = "Excluir ou inativar software", description = "Remove o software do banco de dados ou altera seu status para INATIVO caso possua vínculos ativos.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Software removido ou inativado com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErroApiResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Acesso negado", content = @Content(schema = @Schema(implementation = ErroApiResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Software não encontrado", content = @Content(schema = @Schema(implementation = ErroApiResponse.class)))
+    })
+    ResponseEntity<Void> deletar(
+            @Parameter(description = "ID do software", example = "1") @PathVariable Long id);
+
     @PostMapping("/solicitacoes")
     @Operation(operationId = "createSoftwareSolicitacao", summary = "Criar solicitação de software", description = "Permite ao professor solicitar cadastro/ativação de software para análise administrativa.")
     @ApiResponses(value = {
@@ -34,6 +92,8 @@ public interface ISoftwareController {
             @ApiResponse(responseCode = "404", description = "Professor ou disciplina não encontrada", content = @Content(schema = @Schema(implementation = ErroApiResponse.class)))
     })
     ResponseEntity<SolicitacaoSoftwareResponse> criarSolicitacao(
+            @Parameter(description = "ID do usuário autenticado enviado pelo gateway", example = "12")
+            @RequestHeader("X-User-Id") Long professorId,
             @Valid @RequestBody CreateSolicitacaoSoftwareRequest request,
             UriComponentsBuilder uriBuilder);
 
@@ -56,6 +116,8 @@ public interface ISoftwareController {
             @ApiResponse(responseCode = "409", description = "Usuário autenticado inválido para esta operação", content = @Content(schema = @Schema(implementation = ErroApiResponse.class)))
     })
     ResponseEntity<Page<SolicitacaoSoftwareResponse>> buscarMinhasSolicitacoes(
+            @Parameter(description = "ID do usuário autenticado enviado pelo gateway", example = "12")
+            @RequestHeader("X-User-Id") Long professorId,
             @ParameterObject Pageable filtros);
 
     @GetMapping("/solicitacoes/{id}")
